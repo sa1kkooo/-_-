@@ -1,28 +1,62 @@
-from flask import Flask, render_template, request, redirect, url_for
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Планувальник завдань</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #ffe6f2; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: #ffccdd; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        h2 { color: #ff4081; }
+        form { margin-bottom: 20px; }
+        input, select, button { padding: 10px; margin: 5px; border: none; border-radius: 5px; }
+        select { background-color: #fff; }
+        button { background-color: #ff4081; color: white; cursor: pointer; }
+        button:hover { background-color: #e91e63; }
+        .tasks-container { text-align: left; }
+        .task-list { list-style: none; padding: 0; }
+        .task-list li { background: white; padding: 8px; margin: 5px 0; border-radius: 5px; }
+        .day-header { font-weight: bold; margin-top: 15px; color: #d81b60; }
+        .done { text-decoration: line-through; color: gray; }
+    </style>
+</head>
+<body>
 
-app = Flask(__name__)
+<div class="container">
+    <h2>Планувальник завдань</h2>
 
-# Збереження завдань у пам'яті (можна замінити на базу даних)
-tasks = {"day": [], "week": [], "month": [], "year": []}
+    <form action="/add_task" method="post">
+        <input type="text" name="task" placeholder="Нове завдання" required>
+        <select name="day">
+            {% for day in days %}
+                <option value="{{ day }}">{{ day }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Додати</button>
+    </form>
 
-@app.route('/')
-def home():
-    return render_template('index.html', tasks=tasks)
+    <div class="tasks-container">
+        {% for day, task_list in tasks.items() %}
+            <div class="day-header">{{ day }}</div>
+            <ul class="task-list">
+                {% for task in task_list %}
+                    <li class="{{ 'done' if task.done else '' }}">
+                        {{ task.text }}
+                        <form action="/toggle_task" method="post" style="display:inline;">
+                            <input type="hidden" name="day" value="{{ day }}">
+                            <input type="hidden" name="task_index" value="{{ loop.index0 }}">
+                            <button type="submit">{{ 'Відновити' if task.done else 'Завершити' }}</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+            <form action="/clear_tasks" method="post">
+                <input type="hidden" name="day" value="{{ day }}">
+                <button type="submit">Очистити</button>
+            </form>
+        {% endfor %}
+    </div>
+</div>
 
-@app.route('/add_task', methods=['POST'])
-def add_task():
-    period = request.form.get('period')
-    task = request.form.get('task')
-    if period in tasks and task:
-        tasks[period].append(task)
-    return redirect(url_for('home'))
-
-@app.route('/clear_tasks', methods=['POST'])
-def clear_tasks():
-    period = request.form.get('period')
-    if period in tasks:
-        tasks[period] = []
-    return redirect(url_for('home'))
-
-if __name__ == '__main__':
-    app.run(debug=True)
+</body>
+</html>
